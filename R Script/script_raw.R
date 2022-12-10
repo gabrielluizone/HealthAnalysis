@@ -1,0 +1,135 @@
+install.packages('rmarkdown')
+install.packages('tidyverse')
+install.packages('ggplot2')
+install.packages('dplyr')
+
+library(rmarkdown)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+# Características relacionadas ao paciente, hospital e tempo de permanência por caso
+df <- filter(read_csv('train_data.csv'), Hospital_code == 26)
+
+# Dicionário
+dic <- read_csv('train_data_dictionary.csv')
+
+# Removendo os espaços nas colunas e a id do hospitel
+colnames(df) <- c('case_id','Hospital_code','Hospital_type_code','City_Code_Hospital','Hospital_region_code',
+                  'Available_Extra_Rooms_in_Hospital','Department','Ward_Type','Ward_Facility_Code',
+                  'Bed_Grade','patientid','City_Code_Patient','Type_of_Admission','Severity_of_Illness',
+                  'Visitors_with_Patient','Age','Admission_Deposit','Stay')
+df <- select(df, -Hospital_code)
+
+unique(df$Age)
+
+#filter(df, Stay == 'More than 100 Days')$Stay <- filter(df, Stay == 'More than 100 Days')$Stay
+df$Stay <- replace(df$Stay, df$Stay == 'More than 100 Days', '+100')
+
+summary(select(df, Hospital_type_code, Available_Extra_Rooms_in_Hospital, Bed_Grade, Visitors_with_Patient ))
+
+# Tratar as IDs como única, para não haver operações entre elas
+df$patientid <- as.character(df$patientid)
+df$patientid <- as.character(df$patientid)
+dim(df)
+head(df)
+
+colnames(df)
+
+# Plotagem e Análise
+fig <- function(width, heigth){options(repr.plot.width = width, repr.plot.height = heigth)}
+fig(16,16)
+
+dep <- df %>% 
+  select(Department, Available_Extra_Rooms_in_Hospital, patientid) %>%
+  group_by(Department) %>% 
+  summarise(mean_rooms = mean(Available_Extra_Rooms_in_Hospital), count_pacient = length(patientid) ) %>%
+  arrange(-count_pacient)
+
+dep$frac <- round((dep$count_pacient / sum(dep$count_pacient)) * 100, 1)
+dep
+
+ggplot(data=dep, aes(x='', y=count_pacient, fill=Department)) +
+  geom_bar(stat='identity', width=1, color='white') +
+  coord_polar('y', start=0)
+ggsave('ggplot01.png')
+
+###
+adminission <- df %>% 
+  select(Type_of_Admission, patientid) %>%
+  group_by(Type_of_Admission) %>% 
+  summarise(count_pacient = length(patientid)) %>%
+  arrange(-count_pacient)
+
+adminission$frac <- round((adminission$count_pacient / sum(adminission$count_pacient)) * 100, 1)
+adminission
+
+###
+severity <- df %>% 
+  select(Severity_of_Illness, patientid) %>%
+  group_by(Severity_of_Illness) %>% 
+  summarise(count_pacient = length(patientid)) %>%
+  arrange(-count_pacient)
+
+severity$frac <- round((severity$count_pacient / sum(severity$count_pacient)) * 100, 1)
+severity
+
+###
+adminission_severity <- df %>% 
+  select(Type_of_Admission, Severity_of_Illness, patientid) %>%
+  group_by(Type_of_Admission, Severity_of_Illness) %>% 
+  dplyr::summarise(count_pacient = length(patientid))
+
+adminission_severity$frac <- round((adminission_severity$count_pacient / sum(adminission_severity$count_pacient)) * 100, 1)
+adminission_severity
+
+###
+fig(18,9)
+df %>% 
+  select(patientid, Age, Stay) %>%
+  group_by(Age, Stay) %>% 
+  #distinct() %>% 
+  dplyr::summarise(stay_count = length(Stay)) %>% 
+  ggplot(aes(x=Stay, y=stay_count)) + geom_bar(stat = 'identity', fill = 'tomato') + facet_wrap('Age') + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  labs(title='Frequência por faixa etária e seus dias de hospedagem',
+       subtitle='Faixas diária da hospedagem do paciente no hospital')
+ggsave('ggplot02.png')
+
+unique(df$Department)
+
+###
+fig(16,9)
+df %>%  # Condição da cama na enfermaria
+  select(Department, Type_of_Admission, Available_Extra_Rooms_in_Hospital, Bed_Grade) %>% 
+  group_by(Department, Type_of_Admission) %>% 
+  #distinct() %>% 
+  dplyr::summarise(extra_rooms = length(Available_Extra_Rooms_in_Hospital), bed_grade = length(Bed_Grade)) %>% 
+  ggplot(aes(x=Type_of_Admission, y=extra_rooms)) + 
+  geom_bar(stat = 'identity', fill = 'cornflowerblue') + 
+  facet_wrap('Department') + 
+  labs(title="Frequência por faixa etário e sua hospedagem")
+ggsave('ggplot03.png')
+
+summary(df)
+colnames(df)
+head(df)
+
+###
+fig(15,9)
+df %>% 
+  select(Available_Extra_Rooms_in_Hospital, Department, patientid) %>% 
+  group_by(Available_Extra_Rooms_in_Hospital, Department) %>% 
+  summarise(patientid = length(patientid)) %>% 
+  ggplot(aes(x=Department, y=patientid)) + 
+  geom_bar(stat = 'identity', fill = 'dodgerblue4') + 
+  facet_wrap('Available_Extra_Rooms_in_Hospital') + 
+  labs(title='Quartos extras em relação a frequência de consultas do paciênte')
+ggsave('ggplot04.png')
+
+###
+fig(15,9)
+df %>% 
+  ggplot() + geom_point(mapping=aes(x=Stay, y=Age)) + 
+  facet_wrap('Department')
+ggsave('ggplot05.png')
