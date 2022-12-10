@@ -1,6 +1,6 @@
 # Health Analytics
 
-![](Apresentation\OpenBanner.png)
+![](Apresentation\HealthBanner.png)
 
 > **Informações do Estudo\
 Realizado por** Gabriel Luiz\
