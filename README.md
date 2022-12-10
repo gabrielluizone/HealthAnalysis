@@ -1,7 +1,5 @@
 # Health Analytics
 
-![](Apresentation\HealthBanner.png)
-
 > **Informações do Estudo\
 Realizado por** Gabriel Luiz\
 **Inicio:** 08 Dez. 2022 - **Fim:** 15 Dez. 2022\
