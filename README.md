@@ -1,6 +1,6 @@
 # Health Analytics
 
-![](Apresentation\HealthBanner.png)
+![](https://raw.githubusercontent.com/gabrielluizone/HealthAnalysis/main/Apresentation/HealthBanner.png)
 
 > **Informações do Estudo\
 Realizado por** Gabriel Luiz\
